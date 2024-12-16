@@ -1,81 +1,94 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
 using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Identity;
+using System.Threading.Tasks;
 
 namespace CoffeeCampus.Pages.Account
 {
+    [AllowAnonymous]
     public class LoginModel : PageModel
     {
-        private readonly IConfiguration _configuration; // IConfiguration = henter data fra andre filer(Appsetings.json)
+        private readonly SignInManager<Admin> _signInManager;
+        private readonly UserManager<Admin> _userManager;
 
-        [BindProperty] //Automatisere databinding og forenkler koden
-        public string Email { get; set; }
-        [BindProperty]
-        public string Password { get; set; }
-        public string ErrorMessage { get; set; }
-
-        // Injectet IConfiguration via kontructeren
-        public LoginModel(IConfiguration configuration)
+        public LoginModel(SignInManager<Admin> signInManager, UserManager<Admin> userManager)
         {
-            _configuration = configuration;
+            _signInManager = signInManager;
+            _userManager = userManager;
         }
 
-        public IActionResult OnPost()
+        [BindProperty]
+        public InputModel Input { get; set; }
+
+        public string ReturnUrl { get; set; }
+        public string ErrorMessage { get; set; }
+
+        public class InputModel
         {
-            if (string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
+            [Required]
+            [EmailAddress]
+            public string Email { get; set; }
+
+            [Required]
+            [DataType(DataType.Password)]
+            public string Password { get; set; }
+
+            [Display(Name = "Remember me?")]
+            public bool RememberMe { get; set; }
+        }
+
+        public void OnGet(string returnUrl = null)
+        {
+            ReturnUrl = returnUrl ?? "/";
+            ErrorMessage = TempData["ErrorMessage"] as string;
+        }
+
+        public async Task<IActionResult> OnPostAsync(string returnUrl = null)
+        {
+            ReturnUrl = returnUrl ?? "/";
+
+            if (!ModelState.IsValid)
             {
-                ErrorMessage = "Email og adgangskode skal udfyldes.";
                 return Page();
             }
 
-            // Retrieve the connection string from appsettings.json
-            string connectionString = _configuration.GetConnectionString("DefaultConnection");
-
-            // Database connection
-            using (SqlConnection connection = new SqlConnection(connectionString))
+            // Find the user by email
+            var user = await _userManager.FindByEmailAsync(Input.Email);
+            if (user == null)
             {
-                connection.Open();
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return Page();
+            }
 
-                // SQL query to retrieve the user role based on email and password
-                string query = "SELECT Role, PasswordHash FROM Users WHERE Email = @Email"; // Only fetch the role and hashed password
-                using (SqlCommand command = new SqlCommand(query, connection))
+            // Attempt to sign in
+            var result = await _signInManager.PasswordSignInAsync(
+                user.UserName,
+                Input.Password,
+                Input.RememberMe,
+                lockoutOnFailure: false);
+
+            if (result.Succeeded)
+            {
+                // Redirect based on role
+                if (await _userManager.IsInRoleAsync(user, "Admin"))
                 {
-                    // Add parameters to prevent SQL injection
-                    command.Parameters.AddWithValue("@Email", Email);
-
-                    using (SqlDataReader reader = command.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            var storedPasswordHash = reader["PasswordHash"].ToString();
-                            var role = reader["Role"].ToString();
-
-                            // Compare the hashed password
-                            var passwordHasher = new PasswordHasher<object>(); // Use PasswordHasher to validate hashed password
-                            var verificationResult = passwordHasher.VerifyHashedPassword(null, storedPasswordHash, Password);
-
-                            if (verificationResult == PasswordVerificationResult.Failed)
-                            {
-                                ErrorMessage = "Forkert email eller adgangskode.";
-                                return Page();
-                            }
-
-                            // Login successful
-                            if (role == "Admin")
-                                return RedirectToPage("/AdminDashboard");
-                            else
-                                return RedirectToPage("/UserDashboard");
-                        }
-                        else
-                        {
-                            ErrorMessage = "Forkert email eller adgangskode.";
-                            return Page();
-                        }
-                    }
+                    return LocalRedirect(returnUrl ?? "/Account/AdminDashboard");
                 }
+                else if (await _userManager.IsInRoleAsync(user, "User"))
+                {
+                    return LocalRedirect(returnUrl ?? "/Account/UserDashboard");
+                }
+                else
+                {
+                    return LocalRedirect(returnUrl ?? "/");  // Redirect to home page if returnUrl is null
+                }
+            }
+            else
+            {
+                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+                return Page();
             }
         }
     }

@@ -1,25 +1,26 @@
-using CoffeeCampus.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Logging;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 
 namespace CoffeeCampus.Pages.Account
 {
     [Authorize(Roles = "Admin")]
-    public class AdminDashboardModel : PageModel
+    public class CreateUserModel : PageModel
     {
         private readonly UserManager<Admin> _userManager;
-        private readonly CoffeeCampusDbContext _context;
-        private readonly ILogger<AdminDashboardModel> _logger;
         private readonly RoleManager<IdentityRole> _roleManager;
-
 
         [BindProperty]
         public InputModel Input { get; set; }
+
+        public CreateUserModel(UserManager<Admin> userManager, RoleManager<IdentityRole> roleManager)
+        {
+            _userManager = userManager;
+            _roleManager = roleManager;
+        }
 
         public class InputModel
         {
@@ -43,22 +44,12 @@ namespace CoffeeCampus.Pages.Account
             public string Password { get; set; }
         }
 
-        public AdminDashboardModel(UserManager<Admin> userManager,
-                                   CoffeeCampusDbContext context,
-                                   ILogger<AdminDashboardModel> logger,
-                                   RoleManager<IdentityRole> roleManager)
-        {
-            _userManager = userManager;
-            _context = context;
-            _logger = logger;
-            _roleManager = roleManager;
-        }
-
         public void OnGet()
         {
+            // Any initialization logic if needed.
         }
 
-        public async Task<IActionResult> OnPostAsync(string returnUrl = null)
+        public async Task<IActionResult> OnPostAsync()
         {
             if (!ModelState.IsValid)
             {
@@ -71,15 +62,31 @@ namespace CoffeeCampus.Pages.Account
                 return Forbid();
             }
 
-            var identityAdmin = new Admin
+            var user = new User
             {
-                UserName = Input.Email,
-                Email = Input.Email,
                 FullName = Input.FullName,
+                Email = Input.Email,
+                UserName = Input.Email,
+                Department = Input.Department,
+                AdminId = currentAdmin.Id
             };
 
 
-            var result = await _userManager.CreateAsync(identityAdmin, Input.Password);
+
+
+
+            var adminUser = new Admin
+            {
+                FullName = Input.FullName,
+                Email = Input.Email,
+                UserName = Input.Email,
+
+            };
+
+            var result = await _userManager.CreateAsync(adminUser, Input.Password);
+
+
+
 
             if (result.Succeeded)
             {
@@ -88,34 +95,24 @@ namespace CoffeeCampus.Pages.Account
                 {
                     await _roleManager.CreateAsync(new IdentityRole("User"));
                 }
+                await _userManager.AddToRoleAsync(adminUser, "User");
 
-                await _userManager.AddToRoleAsync(identityAdmin, "User");
-
-                var newUser = new User
-                {
-                    UserName = Input.Email,
-                    Email = Input.Email,
-                    FullName = Input.FullName,
-                    Department = Input.Department,
-                    AdminId = currentAdmin.Id
-                };
-
-                _context.Users.Add(newUser);
-                await _context.SaveChangesAsync();
-
-
-                _logger.LogInformation("Admin created a new user account with password.");
-                return RedirectToPage("AdminDashboard");
+                TempData["SuccessMessage"] = "User created successfully!";
+                return RedirectToPage("/Account/AdminDashboard");
             }
-
-
-            foreach (var error in result.Errors)
+            else
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+
+
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
+
+
+                return Page();
             }
 
-
-            return Page();
         }
     }
 }

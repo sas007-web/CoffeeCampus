@@ -1,22 +1,32 @@
 ﻿@page
 @model CoffeeCampus.Pages.Account.LoginModel
 @{
+    ViewData["Title"] = "Login";
 }
-<div class="cointainer border" style="padding:20px">
-    <form method="post">
-        <div>
-            <label for="email">Email</label> <!--Oprette et tekstboks til Email og navngiver den "Email"-->
-            <input type="email" id="email" name="Email" required /> <!--Dette gør tekstboksen funktionelt med type, ID og navn, hvor dette felt må ikke være tom, da den skal udfyldes-->
-        </div>  
-        <div>
-            <label for="password">Password</label> <!--Oprette et tekstboks til Password og navngiver den "Password"-->
-            <input type="password" id="password" name="Password" required /> <!--Dette gør tekstboksen funktionelt med type, ID og navn, hvor dette felt må ikke være tom, da den skal udfyldes-->
-        </div>
-        <button type="submit">Login</button> <!--En knap bliver lavet og er fungerende-->
-    </form>
 
-    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
-    {
-        <p style="color:red">@Model.ErrorMessage</p> <!--Fejlbesked-->
-    }
-</div>
+<h1>Login</h1>
+
+<form method="post">
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <div class="form-group">
+        <label asp-for="Input.Email"></label>
+        <input asp-for="Input.Email" class="form-control" />
+        <span asp-validation-for="Input.Email" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Input.Password"></label>
+        <input asp-for="Input.Password" class="form-control" />
+        <span asp-validation-for="Input.Password" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <div class="form-check">
+            <input asp-for="Input.RememberMe" class="form-check-input" />
+            <label asp-for="Input.RememberMe" class="form-check-label"></label>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary">Login</button>
+</form>
