@@ -19,6 +19,8 @@ namespace CoffeeCampus.Data
         public DbSet<HoseChangeLog> HoseChangeLogs { get; set; }
         public DbSet<ServiceLog> ServiceLogs { get; set; }
         public DbSet<BinEmptying> BinEmptyings { get; set; }
+        public DbSet<User> User { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder) {
             base.OnModelCreating(builder); // Identity tabeller
