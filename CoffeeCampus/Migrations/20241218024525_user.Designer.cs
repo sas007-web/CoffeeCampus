@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CoffeeCampus.Migrations
 {
     [DbContext(typeof(CoffeeCampusDbContext))]
-    [Migration("20241216145826_finale")]
-    partial class finale
+    [Migration("20241218024525_user")]
+    partial class user
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,7 +25,7 @@ namespace CoffeeCampus.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
-            modelBuilder.Entity("Admin", b =>
+            modelBuilder.Entity("CoffeeCampus.Models.Admin", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("nvarchar(450)");
@@ -46,10 +46,6 @@ namespace CoffeeCampus.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("IdNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -99,13 +95,13 @@ namespace CoffeeCampus.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("CoffeeCampus.Cleaning", b =>
+            modelBuilder.Entity("CoffeeCampus.Models.BinEmptying", b =>
                 {
-                    b.Property<int>("CleaningID")
+                    b.Property<int>("EmptyingID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("CleaningID"));
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("EmptyingID"));
 
                     b.Property<int>("CoffeeMachineID")
                         .HasColumnType("int");
@@ -117,14 +113,14 @@ namespace CoffeeCampus.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("CleaningID");
+                    b.HasKey("EmptyingID");
 
                     b.HasIndex("CoffeeMachineID");
 
-                    b.ToTable("Cleaning", (string)null);
+                    b.ToTable("BinEmptyings");
                 });
 
-            modelBuilder.Entity("CoffeeCampus.CoffeeMachine", b =>
+            modelBuilder.Entity("CoffeeCampus.Models.CoffeeMachine", b =>
                 {
                     b.Property<int>("CoffeeMachineID")
                         .ValueGeneratedOnAdd()
@@ -150,10 +146,10 @@ namespace CoffeeCampus.Migrations
 
                     b.HasKey("CoffeeMachineID");
 
-                    b.ToTable("CoffeeMachine", (string)null);
+                    b.ToTable("CoffeeMachines");
                 });
 
-            modelBuilder.Entity("CoffeeCampus.HoseChange", b =>
+            modelBuilder.Entity("CoffeeCampus.Models.HoseChange", b =>
                 {
                     b.Property<int>("HoseChangeID")
                         .ValueGeneratedOnAdd()
@@ -161,20 +157,66 @@ namespace CoffeeCampus.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("HoseChangeID"));
 
-                    b.Property<int>("CoffeeMachineID")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Date")
+                    b.Property<DateTime>("ChangeDate")
                         .HasColumnType("datetime2");
+
+                    b.Property<int>("CoffeeMachineId")
+                        .HasColumnType("int");
 
                     b.HasKey("HoseChangeID");
 
-                    b.HasIndex("CoffeeMachineID");
+                    b.HasIndex("CoffeeMachineId");
 
-                    b.ToTable("HoseChange", (string)null);
+                    b.ToTable("HoseChanges");
                 });
 
-            modelBuilder.Entity("CoffeeCampus.Refill", b =>
+            modelBuilder.Entity("CoffeeCampus.Models.HoseChangeLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime?>("LastChangeDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("HoseChangeLogs");
+                });
+
+            modelBuilder.Entity("CoffeeCampus.Models.MachineCleaning", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CleaningDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("CoffeeMachineID")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReminderSentDateTime")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ResponsiblePersonId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoffeeMachineID");
+
+                    b.HasIndex("ResponsiblePersonId");
+
+                    b.ToTable("MachineCleanings");
+                });
+
+            modelBuilder.Entity("CoffeeCampus.Models.Refill", b =>
                 {
                     b.Property<int>("RefillID")
                         .ValueGeneratedOnAdd()
@@ -185,7 +227,10 @@ namespace CoffeeCampus.Migrations
                     b.Property<int>("CoffeeMachineID")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("DateTime")
+                    b.Property<int>("RefillAmount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("RefillDate")
                         .HasColumnType("datetime2");
 
                     b.Property<string>("RefillType")
@@ -196,14 +241,20 @@ namespace CoffeeCampus.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("RefillID");
 
                     b.HasIndex("CoffeeMachineID");
 
-                    b.ToTable("Refill", (string)null);
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Refills");
                 });
 
-            modelBuilder.Entity("CoffeeCampus.Service", b =>
+            modelBuilder.Entity("CoffeeCampus.Models.Service", b =>
                 {
                     b.Property<int>("ServiceID")
                         .ValueGeneratedOnAdd()
@@ -225,7 +276,92 @@ namespace CoffeeCampus.Migrations
 
                     b.HasIndex("CoffeeMachineID");
 
-                    b.ToTable("Service", (string)null);
+                    b.ToTable("Services");
+                });
+
+            modelBuilder.Entity("CoffeeCampus.Models.ServiceLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ServiceBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ServiceDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ServiceLogs");
+                });
+
+            modelBuilder.Entity("CoffeeCampus.Models.User", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("AccessFailedCount")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AdminId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Department")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("EmailConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("FullName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("LockoutEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset?>("LockoutEnd")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("NormalizedEmail")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NormalizedUserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PasswordHash")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("PhoneNumberConfirmed")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("SecurityStamp")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("TwoFactorEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -253,6 +389,20 @@ namespace CoffeeCampus.Migrations
                         .HasFilter("[NormalizedName] IS NOT NULL");
 
                     b.ToTable("AspNetRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "1",
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = "2",
+                            Name = "User",
+                            NormalizedName = "USER"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -361,74 +511,9 @@ namespace CoffeeCampus.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("User", b =>
+            modelBuilder.Entity("CoffeeCampus.Models.BinEmptying", b =>
                 {
-                    b.Property<string>("Id")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<int>("AccessFailedCount")
-                        .HasColumnType("int");
-
-                    b.Property<string>("AdminId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Department")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<string>("NormalizedEmail")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NormalizedUserName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PasswordHash")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("SecurityStamp")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("UserName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Users");
-                });
-
-            modelBuilder.Entity("CoffeeCampus.Cleaning", b =>
-                {
-                    b.HasOne("CoffeeCampus.CoffeeMachine", "CoffeeMachine")
+                    b.HasOne("CoffeeCampus.Models.CoffeeMachine", "CoffeeMachine")
                         .WithMany()
                         .HasForeignKey("CoffeeMachineID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -437,31 +522,58 @@ namespace CoffeeCampus.Migrations
                     b.Navigation("CoffeeMachine");
                 });
 
-            modelBuilder.Entity("CoffeeCampus.HoseChange", b =>
+            modelBuilder.Entity("CoffeeCampus.Models.HoseChange", b =>
                 {
-                    b.HasOne("CoffeeCampus.CoffeeMachine", "CoffeeMachine")
+                    b.HasOne("CoffeeCampus.Models.CoffeeMachine", "CoffeeMachine")
                         .WithMany("HoseChanges")
-                        .HasForeignKey("CoffeeMachineID")
+                        .HasForeignKey("CoffeeMachineId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CoffeeMachine");
                 });
 
-            modelBuilder.Entity("CoffeeCampus.Refill", b =>
+            modelBuilder.Entity("CoffeeCampus.Models.MachineCleaning", b =>
                 {
-                    b.HasOne("CoffeeCampus.CoffeeMachine", "CoffeeMachine")
+                    b.HasOne("CoffeeCampus.Models.CoffeeMachine", "CoffeeMachine")
+                        .WithMany()
+                        .HasForeignKey("CoffeeMachineID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("CoffeeCampus.Models.User", "ResponsiblePerson")
+                        .WithMany()
+                        .HasForeignKey("ResponsiblePersonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CoffeeMachine");
+
+                    b.Navigation("ResponsiblePerson");
+                });
+
+            modelBuilder.Entity("CoffeeCampus.Models.Refill", b =>
+                {
+                    b.HasOne("CoffeeCampus.Models.CoffeeMachine", "CoffeeMachine")
                         .WithMany("Refills")
                         .HasForeignKey("CoffeeMachineID")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("CoffeeCampus.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.Navigation("CoffeeMachine");
+
+                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("CoffeeCampus.Service", b =>
+            modelBuilder.Entity("CoffeeCampus.Models.Service", b =>
                 {
-                    b.HasOne("CoffeeCampus.CoffeeMachine", "CoffeeMachine")
+                    b.HasOne("CoffeeCampus.Models.CoffeeMachine", "CoffeeMachine")
                         .WithMany("Services")
                         .HasForeignKey("CoffeeMachineID")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -481,7 +593,7 @@ namespace CoffeeCampus.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("Admin", null)
+                    b.HasOne("CoffeeCampus.Models.Admin", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -490,7 +602,7 @@ namespace CoffeeCampus.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("Admin", null)
+                    b.HasOne("CoffeeCampus.Models.Admin", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -505,7 +617,7 @@ namespace CoffeeCampus.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Admin", null)
+                    b.HasOne("CoffeeCampus.Models.Admin", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -514,14 +626,14 @@ namespace CoffeeCampus.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("Admin", null)
+                    b.HasOne("CoffeeCampus.Models.Admin", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("CoffeeCampus.CoffeeMachine", b =>
+            modelBuilder.Entity("CoffeeCampus.Models.CoffeeMachine", b =>
                 {
                     b.Navigation("HoseChanges");
 

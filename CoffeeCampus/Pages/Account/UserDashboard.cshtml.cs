@@ -1,4 +1,5 @@
 using CoffeeCampus.Data;
+using CoffeeCampus.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -6,10 +7,10 @@ using System.Threading.Tasks;
 
 namespace CoffeeCampus.Pages.Account
 {
-    [Authorize(Roles = "User")]
+    [Authorize(Roles = "User")] // Assuming "User" role for non-admin users
     public class UserDashboardModel : PageModel
     {
-        private readonly UserManager<Admin> _userManager;
+        private readonly UserManager<User> _userManager;
         private readonly CoffeeCampusDbContext _context;
 
         public string FullName { get; set; }
@@ -18,69 +19,34 @@ namespace CoffeeCampus.Pages.Account
         public string AdminName { get; set; }
 
 
-        public UserDashboardModel(UserManager<Admin> userManager, CoffeeCampusDbContext context)
-        {
+        public UserDashboardModel(UserManager<User> userManager, CoffeeCampusDbContext context) {
             _userManager = userManager;
             _context = context;
         }
 
-        public async Task OnGetAsync()
-        {
+        public async Task OnGetAsync() {
 
-            var currentUserId = _userManager.GetUserId(User);
-
+            var currentUser = await _userManager.GetUserAsync(User); // This fetches the logged in user
 
 
-            var user = await _context.Users.FindAsync(currentUserId);
+
+            if (currentUser != null) {
+                FullName = currentUser.FullName;
+                Email = currentUser.Email;
+                Department = currentUser.Department;
 
 
-            if (user != null)
-            {
-
-                FullName = user.FullName;
-                Email = user.Email;
-                Department = user.Department;
-
-                if (user.AdminId != null)
-                {
-                    var admin = await _userManager.FindByIdAsync(user.AdminId);
-
-                    if (admin != null)
-                    {
-                        AdminName = admin.FullName;
-                    }
-                    else
-                    {
-                        AdminName = "Unknown Admin";
-                    }
-
-                }
-                else
-                {
-                    AdminName = "Not Assigned";
-                }
-
-
-            }
-
-            else if (currentUserId != null) // User not found but we have a logged-in Admin
-            {
-
-                var admin = await _userManager.FindByIdAsync(currentUserId);
-
-
-                if (admin != null)
-                {
-                    FullName = admin.FullName;
-                    Email = admin.Email;
+                if (User.IsInRole("Admin"))
                     AdminName = "You are the admin";
-                }
+                else
+                    AdminName = "This is the User Dashboard";
+
+
 
             }
+
+
 
         }
-
-
-
     }
 }

@@ -1,3 +1,4 @@
+using CoffeeCampus.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -7,10 +8,10 @@ using System.Threading.Tasks;
 
 namespace CoffeeCampus.Pages.Account
 {
-    
+
     public class AdminRegistrationModel : PageModel
     {
-        private readonly UserManager<Admin> _userManager;
+        private readonly UserManager<User> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
 
 
@@ -42,7 +43,7 @@ namespace CoffeeCampus.Pages.Account
 
         }
 
-        public AdminRegistrationModel(UserManager<Admin> userManager, RoleManager<IdentityRole> roleManager)
+        public AdminRegistrationModel(UserManager<User> userManager, RoleManager<IdentityRole> roleManager)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -60,7 +61,7 @@ namespace CoffeeCampus.Pages.Account
                 return Page();
             }
 
-            Admin newAdmin = new Admin
+            User newAdmin = new User
             {
                 FullName = Input.FullName,
                 UserName = Input.Email,
@@ -75,10 +76,7 @@ namespace CoffeeCampus.Pages.Account
             if (result.Succeeded)
             {
 
-                if (!await _roleManager.RoleExistsAsync("Admin"))
-                {
-                    await _roleManager.CreateAsync(new IdentityRole("Admin"));
-                }
+
                 await _userManager.AddToRoleAsync(newAdmin, "Admin");
 
                 TempData["SuccessMessage"] = "Admin user created successfully!";

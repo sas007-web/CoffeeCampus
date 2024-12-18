@@ -1,3 +1,4 @@
+using CoffeeCampus.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -6,11 +7,9 @@ using System.Threading.Tasks;
 
 namespace CoffeeCampus.Pages.Account
 {
-
-
     public class ResetPasswordModel : PageModel
     {
-        private readonly UserManager<Admin> _userManager;
+        private readonly UserManager<User> _userManager;
 
         [BindProperty]
         public InputModel Input { get; set; }
@@ -18,7 +17,7 @@ namespace CoffeeCampus.Pages.Account
         public class InputModel
         {
             [Required]
-            public string Email { get; set; }
+            public string UserName { get; set; }
 
             [Required]
             [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
@@ -32,10 +31,9 @@ namespace CoffeeCampus.Pages.Account
 
         }
 
-        public ResetPasswordModel(UserManager<Admin> userManager) {
+        public ResetPasswordModel(UserManager<User> userManager) {
             _userManager = userManager;
         }
-
 
         public async Task<IActionResult> OnPostAsync() {
             if (!ModelState.IsValid) {
@@ -43,20 +41,19 @@ namespace CoffeeCampus.Pages.Account
             }
 
             // 1. Finder useren med hjælp af email
-            var admin = await _userManager.FindByEmailAsync(Input.Email);
+            var user = await _userManager.FindByNameAsync(Input.UserName);
 
-            if (admin == null) {
+            if (user == null) {
                 // Her revealer den ikke at useren ikke findes, gør det mere sikkert
                 ModelState.AddModelError(string.Empty, "Password reset failed.");
-                return Page(); // Retunere
+                return Page();
             }
 
             // 2. her giver den en password reset token (har ikke testet endnu)
-            var token = await _userManager.GeneratePasswordResetTokenAsync(admin);
-
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
 
             // 3. Resetter passwordet 
-            var result = await _userManager.ResetPasswordAsync(admin, token, Input.NewPassword);
+            var result = await _userManager.ResetPasswordAsync(user, token, Input.NewPassword);
 
             if (result.Succeeded) {
                 return RedirectToPage("./Login");

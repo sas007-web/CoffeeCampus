@@ -1,4 +1,5 @@
 ﻿using CoffeeCampus.Data;
+using CoffeeCampus.Models;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Security.Claims;
@@ -6,12 +7,12 @@ using System.Threading.Tasks;
 
 public class AuthService
 {
-    private readonly SignInManager<Admin> _signInManager;
-    private readonly UserManager<Admin> _userManager;
+    private readonly SignInManager<User> _signInManager;
+    private readonly UserManager<User> _userManager;
     private readonly CoffeeCampusDbContext _context;
 
-    public AuthService(SignInManager<Admin> signInManager,
-                       UserManager<Admin> userManager,
+    public AuthService(SignInManager<User> signInManager,
+                       UserManager<User> userManager,
                        CoffeeCampusDbContext context)
     {
         _signInManager = signInManager;
@@ -19,11 +20,14 @@ public class AuthService
         _context = context;
     }
 
-    public async Task<bool> LoginAsync(string email, string password)
+    public async Task<bool> LoginAsync(string userName, string password) // Use username instead of email
     {
-        var result = await _signInManager.PasswordSignInAsync(email, password,
-                                                             isPersistent: false,
-                                                             lockoutOnFailure: true);
+        var result = await _signInManager.PasswordSignInAsync(
+            userName, // use username directly
+             password,
+             isPersistent: false,
+             lockoutOnFailure: true);
+
         return result.Succeeded;
     }
 
@@ -32,7 +36,7 @@ public class AuthService
         await _signInManager.SignOutAsync();
     }
 
-    public async Task<IdentityResult> RegisterAdminAsync(Admin admin, string password)
+    public async Task<IdentityResult> RegisterAdminAsync(User admin, string password)
     {
         var result = await _userManager.CreateAsync(admin, password);
 
@@ -52,23 +56,13 @@ public class AuthService
             return IdentityResult.Failed(new IdentityError { Description = "Only authenticated admins can create users." });
         }
 
-
-        var adminId = _userManager.GetUserId(adminUser);
-        user.AdminId = adminId;
-
-        _context.Users.Add(user);
-        try
+        var result = await _userManager.CreateAsync(user, password);
+        if (!result.Succeeded)
         {
-            await _context.SaveChangesAsync();
-            return IdentityResult.Success;
+            return result;
         }
-        catch (Exception ex)
-        {
 
-            return IdentityResult.Failed(new IdentityError { Description = $"Error creating user: {ex.Message}" });
-        }
+        return IdentityResult.Success;
     }
-
-
 
 }

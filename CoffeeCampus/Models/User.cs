@@ -1,9 +1,18 @@
 ﻿using Microsoft.AspNetCore.Identity;
 
-public class User : IdentityUser, IApplicationUser
+namespace CoffeeCampus.Models
 {
-    public required string FullName { get; set; }
-    public override required string Email { get; set; } // Must override Email here as well
-    public required string Department { get; set; }
-    public required string AdminId { get; set; } // Foreign key to Admin
+    public class User : IdentityUser // Removed  , IApplicationUser
+    {
+        public string FullName { get; set; }
+        public string Email { get; set; }
+        public string Department { get; set; }
+        // public string AdminId { get; set; } // Remove AdminId
+
+        // Keep the bool props if needed for your application.
+        public bool EmailConfirmed { get; set; } // Add EmailConfirmed
+        public bool PhoneNumberConfirmed { get; set; } //Add PhoneNumberConfirmed
+        public bool TwoFactorEnabled { get; set; }
+        public bool LockoutEnabled { get; set; }
+    }
 }

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace CoffeeCampus
+namespace CoffeeCampus.Models
 {
     public class CoffeeMachine
     {

@@ -1,14 +1,11 @@
-﻿namespace CoffeeCampus
+﻿namespace CoffeeCampus.Models
 {
-    public class Cleaning
+    public class Service
     {
-        public int CleaningID { get; set; }
+        public int ServiceID { get; set; }
         public DateTime DateTime { get; set; }
-        public string Responsible { get; set; }
-
+        public string Description { get; set; }
         public int CoffeeMachineID { get; set; }
-
         public CoffeeMachine CoffeeMachine { get; set; }
-
-    }
+    };
 }

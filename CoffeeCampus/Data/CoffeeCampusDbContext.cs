@@ -1,30 +1,33 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using CoffeeCampus.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 
 namespace CoffeeCampus.Data
 {
-    public class CoffeeCampusDbContext : IdentityDbContext<Admin, IdentityRole, string>
+    public class CoffeeCampusDbContext : IdentityDbContext<User, IdentityRole, string>
     {
         public CoffeeCampusDbContext(DbContextOptions<CoffeeCampusDbContext> options)
             : base(options) {
         }
 
-        public DbSet<Refill> Refills { get; set; }
-        public DbSet<Cleaning> Cleaning { get; set; }
         public DbSet<CoffeeMachine> CoffeeMachines { get; set; }
+        public DbSet<Refill> Refills { get; set; }
+        public DbSet<MachineCleaning> MachineCleanings { get; set; }
         public DbSet<HoseChange> HoseChanges { get; set; }
         public DbSet<Service> Services { get; set; }
-        public DbSet<User> Users { get; set; }
+        public DbSet<HoseChangeLog> HoseChangeLogs { get; set; }
+        public DbSet<ServiceLog> ServiceLogs { get; set; }
+        public DbSet<BinEmptying> BinEmptyings { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder) {
-            base.OnModelCreating(builder); // Ensure Identity tables are configured
+            base.OnModelCreating(builder); // Identity tabeller
 
-            builder.Entity<Refill>().ToTable("Refill");
-            builder.Entity<Cleaning>().ToTable("Cleaning");
-            builder.Entity<CoffeeMachine>().ToTable("CoffeeMachine");
-            builder.Entity<HoseChange>().ToTable("HoseChange");
-            builder.Entity<Service>().ToTable("Service");
+            // Seed roller
+            builder.Entity<IdentityRole>().HasData(
+                new IdentityRole { Id = "1", Name = "Admin", NormalizedName = "ADMIN" },
+                new IdentityRole { Id = "2", Name = "User", NormalizedName = "USER" }
+            );
         }
     }
 }

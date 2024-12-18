@@ -1,3 +1,4 @@
+using CoffeeCampus.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -10,13 +11,12 @@ namespace CoffeeCampus.Pages.Account
     [AllowAnonymous]
     public class LoginModel : PageModel
     {
-        private readonly SignInManager<Admin> _signInManager;
-        private readonly UserManager<Admin> _userManager;
+        private readonly SignInManager<User> _signInManager;
 
-        public LoginModel(SignInManager<Admin> signInManager, UserManager<Admin> userManager)
+
+        public LoginModel(SignInManager<User> signInManager)
         {
             _signInManager = signInManager;
-            _userManager = userManager;
         }
 
         [BindProperty]
@@ -28,8 +28,8 @@ namespace CoffeeCampus.Pages.Account
         public class InputModel
         {
             [Required]
-            [EmailAddress]
-            public string Email { get; set; }
+            public string UserName { get; set; }
+
 
             [Required]
             [DataType(DataType.Password)]
@@ -53,43 +53,40 @@ namespace CoffeeCampus.Pages.Account
             {
                 return Page();
             }
-
-            // Find the user by email
-            var user = await _userManager.FindByEmailAsync(Input.Email);
-            if (user == null)
-            {
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                return Page();
-            }
-
-            // Attempt to sign in
             var result = await _signInManager.PasswordSignInAsync(
-                user.UserName,
-                Input.Password,
-                Input.RememberMe,
-                lockoutOnFailure: false);
+               Input.UserName,
+               Input.Password,
+               Input.RememberMe,
+               lockoutOnFailure: false);
 
             if (result.Succeeded)
             {
-                // Redirect based on role
-                if (await _userManager.IsInRoleAsync(user, "Admin"))
+
+                var user = await _signInManager.UserManager.FindByNameAsync(Input.UserName);
+
+                if (user != null)
                 {
-                    return LocalRedirect(returnUrl ?? "/Account/AdminDashboard");
+                    if (await _signInManager.UserManager.IsInRoleAsync(user, "Admin"))
+                    {
+                        return LocalRedirect(returnUrl ?? "/Account/AdminDashboard");
+                    }
+                    else if (await _signInManager.UserManager.IsInRoleAsync(user, "User"))
+                    {
+                        return LocalRedirect(returnUrl ?? "/Account/UserDashboard");
+                    }
+                    else
+                    {
+                        return LocalRedirect(returnUrl ?? "/");  // Home page for others
+
+                    }
                 }
-                else if (await _userManager.IsInRoleAsync(user, "User"))
-                {
-                    return LocalRedirect(returnUrl ?? "/Account/UserDashboard");
-                }
-                else
-                {
-                    return LocalRedirect(returnUrl ?? "/");  // Redirect to home page if returnUrl is null
-                }
+
             }
-            else
-            {
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                return Page();
-            }
+
+
+            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            return Page();
         }
+
     }
 }
